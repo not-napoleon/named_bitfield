@@ -20,6 +20,17 @@ def test_has_attributes():
     ok_(not hasattr(test1, 'bogus'))
 
 
+def test_positional_init():
+    """Can initilize field values by position
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(3, 7, 3)
+    eq_(test1.a, 3)
+    eq_(test1.b, 7)
+    eq_(test1.c, 3)
+
+
 def test_set_attributes():
     """Can set the attributes of a named_bitfield
     """
@@ -80,9 +91,9 @@ def test_overrun():
     nbf = mutable_named_bitfield('TestBitfield',
                                  [('a', 2), ('b', 4), ('c', 2)])
     test1 = nbf()
-    test1.a = 2
+    test1.a = 0
     test1.b = 7
-    test1.c = 3
+    test1.c = 0
 
     try:
         test1.b = 2**6 - 1
@@ -91,20 +102,9 @@ def test_overrun():
         # to check for side effects
         pass
 
-    eq_(test1.a, 2)
+    eq_(test1.a, 0)
     # b is in an undefined state, no sane test for its value
-    eq_(test1.c, 3)
-
-
-def test_positional_init():
-    """Can initilize field values by position
-    """
-    nbf = mutable_named_bitfield('TestBitfield',
-                                 [('a', 2), ('b', 4), ('c', 2)])
-    test1 = nbf(3, 7, 3)
-    eq_(test1.a, 3)
-    eq_(test1.b, 7)
-    eq_(test1.c, 3)
+    eq_(test1.c, 0)
 
 
 def test_kwargs_init():
@@ -136,3 +136,22 @@ def test_mixed_init():
     eq_(test1.a, 3)
     eq_(test1.b, 7)
     eq_(test1.c, 2)
+
+
+@raises(ValueError)
+def test_set_too_big():
+    """Setting a field to a value that doesn't fit in those bits raises
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf()
+    test1.b = 2**6 - 1
+
+
+@raises(ValueError)
+def test_init_too_big():
+    """Initilizing a field to a value that doesn't fit raises
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    nbf(1024, 1024, 1024)

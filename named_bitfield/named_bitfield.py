@@ -3,6 +3,18 @@ Create collections of named fixed width integers backed by python ints
 or longs (as appropriate) and with clean interfaces to the fields.
 """
 
+from collections import OrderedDict, namedtuple
+
+
+def bitwidth(num):
+    """Return the number of bits required to represent num
+    """
+    count = 0
+    while num:
+        count += 1
+        num = num >> 1
+    return count
+
 
 def mutable_named_bitfield(cname, fields):
     """Create a named bitfield for the given specification
@@ -16,6 +28,15 @@ def mutable_named_bitfield(cname, fields):
 
     """
 
+    FieldSpec = namedtuple('FieldSpec', "offset mask width")
+    field_mapping = OrderedDict()
+    # build out masks & offsets
+    offset = 0
+    for fieldname, width in fields:
+        mask = (2**(offset + width) - 1) - (2**offset - 1)
+        field_mapping[fieldname] = FieldSpec(offset, mask, width)
+        offset += width
+
     def mk_property(fieldname):
         """use a clousre to build out the getter & setter for the given field
         """
@@ -24,30 +45,57 @@ def mutable_named_bitfield(cname, fields):
             """
             if isinstance(value, basestring):
                 raise TypeError("Cannot set integer field to a string")
-            self._fields[fieldname] = int(value)
+            value = int(value)
+            vals = []
+            for fname, fspec in self._field_mapping.iteritems():
+                if fname != fieldname:
+                    vals.insert(0, getattr(self, fname))
+                else:
+                    vals.insert(0, value)
+            # Rebuilding the whole string is a little kludgy, but it's good for
+            # a proof of concept iteration
+            self._build_from_vals(vals)
 
         def field_getter(self):
             """Return the value for the given field
             """
-            return self._fields[fieldname]
+            field_spec = self._field_mapping[fieldname]
+            return (self._bitstring & field_spec.mask) >> field_spec.offset
 
         return property(field_getter, field_setter)
 
     props = {fn: mk_property(fn) for fn, v in fields}
+    props['_field_mapping'] = field_mapping
 
     def initer(self, *args, **kwargs):
         """closuer to initilize the new class
         """
+        self._bitstring = 0
         args = list(args)
-        fieldnames = [k for k, _ in fields]
-        while len(args) < len(fieldnames):
-            args.append(0)
-        self._fields = {k: v for k, v in zip(fieldnames, args)}
-        for key, value in kwargs.iteritems():
-            if key not in self._fields:
+        vals = []
+        fieldnames = self._field_mapping.keys()
+        # validate kwargs
+        for key in kwargs:
+            if key not in fieldnames:
                 raise TypeError("%s got unexpected keyword argument %s"
                                 % (cname, key))
-            self._fields[key] = value
+        while args:
+            vals.insert(0, args.pop(0))
+            fieldnames.pop(0)
+        while fieldnames:
+            vals.insert(0, kwargs.get(fieldnames.pop(0), 0))
+        self._build_from_vals(vals)
 
+    def build_from_vals(self, vals):
+        """Construct a bitstring from a spec and a series of values
+        """
+        self._bitstring = 0
+        for field_spec, value in zip(self._field_mapping.values(), vals):
+            if bitwidth(value) > field_spec.width:
+                raise ValueError("%d will not fit in %d bit wide field",
+                                 value, field_spec.width)
+            self._bitstring = self._bitstring << field_spec.width
+            self._bitstring |= value
     props['__init__'] = initer
+    props['_build_from_vals'] = build_from_vals
     return type(cname, (object,), props)

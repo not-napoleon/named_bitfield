@@ -98,4 +98,8 @@ def mutable_named_bitfield(cname, fields):
             self._bitstring |= value
     props['__init__'] = initer
     props['_build_from_vals'] = build_from_vals
+    props['__int__'] = lambda self: self._bitstring
+    props['__long__'] = lambda self: self._bitstring
+    props['__oct__'] = lambda self: oct(self._bitstring)
+    props['__hex__'] = lambda self: hex(self._bitstring)
     return type(cname, (object,), props)

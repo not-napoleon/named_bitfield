@@ -155,3 +155,39 @@ def test_init_too_big():
     nbf = mutable_named_bitfield('TestBitfield',
                                  [('a', 2), ('b', 4), ('c', 2)])
     nbf(1024, 1024, 1024)
+
+
+def test_to_int():
+    """Can cast the named_bitfield to an int correctly
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    eq_(int(test1), 150)
+
+
+def test_to_long():
+    """Can cast the named_bitfield to a long correctly
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    eq_(long(test1), 150)
+
+
+def test_to_oct():
+    """Correctly show octal representation when asked
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    eq_(oct(test1), '0226')
+
+
+def test_to_hex():
+    """Correctly show hex representation when asked
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    eq_(hex(test1), '0x96')

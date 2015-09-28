@@ -5,6 +5,8 @@ or longs (as appropriate) and with clean interfaces to the fields.
 
 from collections import OrderedDict, namedtuple
 
+import six
+
 
 class BaseNamedBitfield(object):
     """Baseclass for named bitfields.  Don't implement or instantiate this,
@@ -18,7 +20,7 @@ class BaseNamedBitfield(object):
         self._bitstring = 0
         args = list(args)
         vals = []
-        fieldnames = self._field_mapping.keys()
+        fieldnames = list(self._field_mapping.keys())
         # validate kwargs
         for key in kwargs:
             if key not in fieldnames:
@@ -35,7 +37,7 @@ class BaseNamedBitfield(object):
         """Construct a bitstring from a spec and a series of values
         """
         bitstring = 0
-        for field_spec, value in zip(self._field_mapping.values(), vals):
+        for field_spec, value in zip(list(self._field_mapping.values()), vals):
             if bitwidth(value) > field_spec.width:
                 raise ValueError("%d will not fit in %d bit wide field",
                                  value, field_spec.width)
@@ -53,7 +55,7 @@ class BaseNamedBitfield(object):
         """
         # We can't validate each individual field, but we can make sure the
         # whole integer fits in the defined fields
-        total_bits = sum([f.width for f in cls._field_mapping.values()])
+        total_bits = sum([f.width for f in list(cls._field_mapping.values())])
         if bitwidth(num) > total_bits:
             raise ValueError("{0} will not fit in a {1}".format(num,
                                                                 cls.__name__))
@@ -73,16 +75,37 @@ class BaseNamedBitfield(object):
     def __hex__(self):
         return hex(self._bitstring)
 
+    def __index__(self):
+        return self._bitstring
+
     def __str__(self):
         return str(int(self))
 
     def __repr__(self):
         field_string = ",".join(["{0}={1}".format(fn, getattr(self, fn))
-                                 for fn in self._field_mapping.keys()])
+                                 for fn in list(self._field_mapping.keys())])
         return "{0}({1})".format(self.__class__.__name__, field_string)
 
     def __cmp__(self, other):
         return int(self) - int(other)
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __gt__(self, other):
+        return self.__cmp__(other) > 0
+
+    def __ge__(self, other):
+        return self.__cmp__(other) >= 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
+
+    def __le__(self, other):
+        return self.__cmp__(other) <= 0
 
     def __hash__(self):
         # This means different named_bitfields that happen to have the same
@@ -130,11 +153,11 @@ def named_bitfield(cname, fields, mutable=True):
             def field_setter(self, value):
                 """Validate and set the given field
                 """
-                if isinstance(value, basestring):
+                if isinstance(value, six.string_types):
                     raise TypeError("Cannot set integer field to a string")
                 value = int(value)
                 vals = []
-                for fname, fspec in self._field_mapping.iteritems():
+                for fname, fspec in self._field_mapping.items():
                     if fname != fieldname:
                         vals.insert(0, getattr(self, fname))
                     else:

@@ -3,6 +3,8 @@ Tests for named bitfields
 """
 import collections
 
+import six
+
 from nose.tools import ok_, eq_, assert_raises, raises
 
 
@@ -192,7 +194,7 @@ def test_to_long():
     """
     nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
     test1 = nbf(2, 5, 2)
-    eq_(long(test1), 150)
+    eq_(int(test1), 150)
 
 
 def test_to_oct():
@@ -200,7 +202,10 @@ def test_to_oct():
     """
     nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
     test1 = nbf(2, 5, 2)
-    eq_(oct(test1), '0226')
+    expected = '0226'
+    if six.PY3:
+        expected = '0o226'
+    eq_(oct(test1), expected)
 
 
 def test_to_hex():

@@ -38,11 +38,12 @@ setup(
 
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
     ],
     keywords='bitfields bitstrings smart_ids',
     py_modules=["named_bitfield"],
     # packages=find_packages(exclude=['tests*']),
-    install_requires=[],
+    install_requires=['six'],
 
     extras_require={
         'test': ['nose'],

@@ -125,7 +125,7 @@ def bitwidth(num):
     return count
 
 
-def named_bitfield(cname, fields, mutable=True):
+def named_bitfield(cname, fields, mutable=False):
     """Create a named bitfield for the given specification
 
     :param cname: Name of the generated class

@@ -93,9 +93,9 @@ def test_from_int():
     """
     nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
     test1 = nbf.fromint(85)
-    test1.a = 1
-    test1.b = 5
-    test1.c = 1
+    eq_(test1.a, 1)
+    eq_(test1.b, 5)
+    eq_(test1.c, 1)
 
 
 @raises(ValueError)
@@ -174,7 +174,8 @@ def test_immutable_no_setter():
 def test_set_too_big():
     """Setting a field to a value that doesn't fit in those bits raises
     """
-    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=True)
     test1 = nbf()
     test1.b = 2**6 - 1
 

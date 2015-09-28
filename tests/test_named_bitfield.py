@@ -9,6 +9,8 @@ from nose.tools import ok_, eq_, assert_raises, raises
 from named_bitfield.named_bitfield import named_bitfield
 
 
+###
+# Tests making sure I used type correctly
 def test_has_attributes():
     """Instances of the named_bitfield have attributes matching the field names
     """
@@ -35,10 +37,9 @@ def test_instance_attributes():
     eq_(test2.b, 0)
     eq_(test2.c, 0)
 
+
 ###
 # Init tests
-
-
 def test_positional_init():
     """Can initilize field values by position
     """
@@ -87,8 +88,6 @@ def test_init_too_big():
 
 ####
 # Setter tests
-
-
 def test_set_attributes():
     """Can set the attributes of a named_bitfield
     """
@@ -131,7 +130,7 @@ def test_overrun():
 
     try:
         test1.b = 2**6 - 1
-    except Exception:
+    except ValueError:
         # Other tests make sure this raises the right error; here we just want
         # to check for side effects
         pass
@@ -162,8 +161,6 @@ def test_set_too_big():
 
 ###
 # Magic Method Tests
-
-
 def test_to_int():
     """Can cast the named_bitfield to an int correctly
     """
@@ -225,7 +222,6 @@ def test_gt_same_type():
 
 ###
 # Hash behavior tests
-
 @raises(TypeError)
 def test_unhashable_mutables_1():
     """Attempting to hash a mutable bitfield raises

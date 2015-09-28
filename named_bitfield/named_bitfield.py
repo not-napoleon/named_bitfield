@@ -8,7 +8,7 @@ from collections import OrderedDict, namedtuple
 
 class BaseNamedBitfield(object):
     """Baseclass for named bitfields.  Don't implement or instantiate this,
-    instead call mutable_named_bitfield or immutable_named_bitfield as needed.
+    instead call named_bitfield or immutable_named_bitfield as needed.
     """
     _field_mapping = {}
 
@@ -68,7 +68,7 @@ def bitwidth(num):
     return count
 
 
-def mutable_named_bitfield(cname, fields):
+def named_bitfield(cname, fields, mutable=True):
     """Create a named bitfield for the given specification
 
     :param cname: Name of the generated class
@@ -92,21 +92,22 @@ def mutable_named_bitfield(cname, fields):
     def mk_property(fieldname):
         """use a clousre to build out the getter & setter for the given field
         """
-        def field_setter(self, value):
-            """Validate and set the given field
-            """
-            if isinstance(value, basestring):
-                raise TypeError("Cannot set integer field to a string")
-            value = int(value)
-            vals = []
-            for fname, fspec in self._field_mapping.iteritems():
-                if fname != fieldname:
-                    vals.insert(0, getattr(self, fname))
-                else:
-                    vals.insert(0, value)
-            # Rebuilding the whole string is a little kludgy, but it's good for
-            # a proof of concept iteration
-            self._build_from_vals(vals)
+        if mutable:
+            def field_setter(self, value):
+                """Validate and set the given field
+                """
+                if isinstance(value, basestring):
+                    raise TypeError("Cannot set integer field to a string")
+                value = int(value)
+                vals = []
+                for fname, fspec in self._field_mapping.iteritems():
+                    if fname != fieldname:
+                        vals.insert(0, getattr(self, fname))
+                    else:
+                        vals.insert(0, value)
+                # Rebuilding the whole string is a little kludgy, but it's
+                # good for a proof of concept iteration
+                self._build_from_vals(vals)
 
         def field_getter(self):
             """Return the value for the given field
@@ -118,4 +119,7 @@ def mutable_named_bitfield(cname, fields):
 
     props = {fn: mk_property(fn) for fn, v in fields}
     props['_field_mapping'] = field_mapping
+    # Explicitly mark the mutalbe version as unhashable
+    if mutable:
+        props['__hash__'] = None
     return type(cname, (BaseNamedBitfield,), props)

@@ -1,0 +1,4 @@
+[ ] Tests for python 3 support
+[ ] namedtuple style field name validation
+[ ] Travis-ci integration
+[ ] More documentation

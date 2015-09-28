@@ -29,21 +29,19 @@ class BaseNamedBitfield(object):
             fieldnames.pop(0)
         while fieldnames:
             vals.insert(0, kwargs.get(fieldnames.pop(0), 0))
-        self._build_from_vals(vals)
+        self._bitstring = self._build_from_vals(vals)
 
     def _build_from_vals(self, vals):
         """Construct a bitstring from a spec and a series of values
         """
-        self._bitstring = 0
+        bitstring = 0
         for field_spec, value in zip(self._field_mapping.values(), vals):
             if bitwidth(value) > field_spec.width:
                 raise ValueError("%d will not fit in %d bit wide field",
                                  value, field_spec.width)
-            self._bitstring = self._bitstring << field_spec.width
-            self._bitstring |= value
-
-    def __cmp__(self, other):
-        return int(self) - int(other)
+            bitstring = bitstring << field_spec.width
+            bitstring |= value
+        return bitstring
 
     def __int__(self):
         return self._bitstring
@@ -56,6 +54,17 @@ class BaseNamedBitfield(object):
 
     def __hex__(self):
         return hex(self._bitstring)
+
+    def __str__(self):
+        return str(int(self))
+
+    def __repr__(self):
+        field_string = ",".join(["{0}={1}".format(fn, getattr(self, fn))
+                                 for fn in self._field_mapping.keys()])
+        return "{0}({1})".format(self.__class__.__name__, field_string)
+
+    def __cmp__(self, other):
+        return int(self) - int(other)
 
     def __hash__(self):
         # This means different named_bitfields that happen to have the same
@@ -114,7 +123,7 @@ def named_bitfield(cname, fields, mutable=True):
                         vals.insert(0, value)
                 # Rebuilding the whole string is a little kludgy, but it's
                 # good for a proof of concept iteration
-                self._build_from_vals(vals)
+                self._bitstring = self._build_from_vals(vals)
 
         def field_getter(self):
             """Return the value for the given field

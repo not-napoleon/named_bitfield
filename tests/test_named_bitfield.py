@@ -6,7 +6,7 @@ import collections
 from nose.tools import ok_, eq_, assert_raises, raises
 
 
-from named_bitfield.named_bitfield import named_bitfield
+from named_bitfield import named_bitfield
 
 
 ###

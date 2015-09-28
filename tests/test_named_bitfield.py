@@ -5,7 +5,7 @@ import collections
 
 import six
 
-from nose.tools import ok_, eq_, assert_raises, raises
+from nose.tools import ok_, eq_, assert_raises, raises, assert_greater
 
 
 from named_bitfield import named_bitfield
@@ -38,6 +38,15 @@ def test_instance_attributes():
     eq_(test2.a, 0)
     eq_(test2.b, 0)
     eq_(test2.c, 0)
+
+
+def test_endianness():
+    """When creating a named_bitfield, the first field is the most significant
+    """
+    nbf = named_bitfield('TestBitfield', [('a', 4), ('b', 4)])
+    test1 = nbf(0, 15)
+    test2 = nbf(15, 0)
+    assert_greater(test2, test1)
 
 
 ###

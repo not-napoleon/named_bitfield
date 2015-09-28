@@ -27,10 +27,10 @@ class BaseNamedBitfield(object):
                 raise TypeError("%s got unexpected keyword argument %s"
                                 % (self.__class__.__name__, key))
         while args:
-            vals.insert(0, args.pop(0))
+            vals.append(args.pop(0))
             fieldnames.pop(0)
         while fieldnames:
-            vals.insert(0, kwargs.get(fieldnames.pop(0), 0))
+            vals.append(kwargs.get(fieldnames.pop(0), 0))
         self._bitstring = self._build_from_vals(vals)
 
     def _build_from_vals(self, vals):
@@ -141,10 +141,12 @@ def named_bitfield(cname, fields, mutable=False):
     field_mapping = OrderedDict()
     # build out masks & offsets
     offset = 0
-    for fieldname, width in fields:
+    for fieldname, width in reversed(fields):
         mask = (2**(offset + width) - 1) - (2**offset - 1)
         field_mapping[fieldname] = FieldSpec(offset, mask, width)
         offset += width
+
+    field_mapping = OrderedDict(reversed(list(field_mapping.items())))
 
     def mk_property(fieldname):
         """use a clousre to build out the getter & setter for the given field
@@ -159,9 +161,9 @@ def named_bitfield(cname, fields, mutable=False):
                 vals = []
                 for fname, fspec in self._field_mapping.items():
                     if fname != fieldname:
-                        vals.insert(0, getattr(self, fname))
+                        vals.append(getattr(self, fname))
                     else:
-                        vals.insert(0, value)
+                        vals.append(value)
                 # Rebuilding the whole string is a little kludgy, but it's
                 # good for a proof of concept iteration
                 self._bitstring = self._build_from_vals(vals)

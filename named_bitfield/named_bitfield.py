@@ -6,6 +6,58 @@ or longs (as appropriate) and with clean interfaces to the fields.
 from collections import OrderedDict, namedtuple
 
 
+class BaseNamedBitfield(object):
+    """Baseclass for named bitfields.  Don't implement or instantiate this,
+    instead call mutable_named_bitfield or immutable_named_bitfield as needed.
+    """
+    _field_mapping = {}
+
+    def __init__(self, *args, **kwargs):
+        """closuer to initilize the new class
+        """
+        self._bitstring = 0
+        args = list(args)
+        vals = []
+        fieldnames = self._field_mapping.keys()
+        # validate kwargs
+        for key in kwargs:
+            if key not in fieldnames:
+                raise TypeError("%s got unexpected keyword argument %s"
+                                % (self.__class__.__name__, key))
+        while args:
+            vals.insert(0, args.pop(0))
+            fieldnames.pop(0)
+        while fieldnames:
+            vals.insert(0, kwargs.get(fieldnames.pop(0), 0))
+        self._build_from_vals(vals)
+
+    def _build_from_vals(self, vals):
+        """Construct a bitstring from a spec and a series of values
+        """
+        self._bitstring = 0
+        for field_spec, value in zip(self._field_mapping.values(), vals):
+            if bitwidth(value) > field_spec.width:
+                raise ValueError("%d will not fit in %d bit wide field",
+                                 value, field_spec.width)
+            self._bitstring = self._bitstring << field_spec.width
+            self._bitstring |= value
+
+    def __cmp__(self, other):
+        return int(self) - int(other)
+
+    def __int__(self):
+        return self._bitstring
+
+    def __long__(self):
+        return self._bitstring
+
+    def __oct__(self):
+        return oct(self._bitstring)
+
+    def __hex__(self):
+        return hex(self._bitstring)
+
+
 def bitwidth(num):
     """Return the number of bits required to represent num
     """
@@ -64,48 +116,6 @@ def mutable_named_bitfield(cname, fields):
 
         return property(field_getter, field_setter)
 
-    def initer(self, *args, **kwargs):
-        """closuer to initilize the new class
-        """
-        self._bitstring = 0
-        args = list(args)
-        vals = []
-        fieldnames = self._field_mapping.keys()
-        # validate kwargs
-        for key in kwargs:
-            if key not in fieldnames:
-                raise TypeError("%s got unexpected keyword argument %s"
-                                % (cname, key))
-        while args:
-            vals.insert(0, args.pop(0))
-            fieldnames.pop(0)
-        while fieldnames:
-            vals.insert(0, kwargs.get(fieldnames.pop(0), 0))
-        self._build_from_vals(vals)
-
-    def build_from_vals(self, vals):
-        """Construct a bitstring from a spec and a series of values
-        """
-        self._bitstring = 0
-        for field_spec, value in zip(self._field_mapping.values(), vals):
-            if bitwidth(value) > field_spec.width:
-                raise ValueError("%d will not fit in %d bit wide field",
-                                 value, field_spec.width)
-            self._bitstring = self._bitstring << field_spec.width
-            self._bitstring |= value
-
-    def compare(self, other):
-        """compare values
-        """
-        return int(self) - int(other)
-
     props = {fn: mk_property(fn) for fn, v in fields}
     props['_field_mapping'] = field_mapping
-    props['__init__'] = initer
-    props['_build_from_vals'] = build_from_vals
-    props['__int__'] = lambda self: self._bitstring
-    props['__long__'] = lambda self: self._bitstring
-    props['__oct__'] = lambda self: oct(self._bitstring)
-    props['__hex__'] = lambda self: hex(self._bitstring)
-    props['__cmp__'] = compare
-    return type(cname, (object,), props)
+    return type(cname, (BaseNamedBitfield,), props)

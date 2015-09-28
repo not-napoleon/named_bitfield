@@ -64,9 +64,6 @@ def mutable_named_bitfield(cname, fields):
 
         return property(field_getter, field_setter)
 
-    props = {fn: mk_property(fn) for fn, v in fields}
-    props['_field_mapping'] = field_mapping
-
     def initer(self, *args, **kwargs):
         """closuer to initilize the new class
         """
@@ -96,10 +93,19 @@ def mutable_named_bitfield(cname, fields):
                                  value, field_spec.width)
             self._bitstring = self._bitstring << field_spec.width
             self._bitstring |= value
+
+    def compare(self, other):
+        """compare values
+        """
+        return int(self) - int(other)
+
+    props = {fn: mk_property(fn) for fn, v in fields}
+    props['_field_mapping'] = field_mapping
     props['__init__'] = initer
     props['_build_from_vals'] = build_from_vals
     props['__int__'] = lambda self: self._bitstring
     props['__long__'] = lambda self: self._bitstring
     props['__oct__'] = lambda self: oct(self._bitstring)
     props['__hex__'] = lambda self: hex(self._bitstring)
+    props['__cmp__'] = compare
     return type(cname, (object,), props)

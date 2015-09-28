@@ -191,3 +191,33 @@ def test_to_hex():
                                  [('a', 2), ('b', 4), ('c', 2)])
     test1 = nbf(2, 5, 2)
     eq_(hex(test1), '0x96')
+
+
+def test_equality_same_type():
+    """Equality works as expected within a named_bitfield type
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    test2 = nbf(2, 5, 2)
+    eq_(test1, test2)
+
+
+def test_lt_same_type():
+    """Less than works within a named_bitfield type
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    test2 = nbf(0, 0, 0)
+    ok_(test2 < test1)
+
+
+def test_gt_same_type():
+    """Greater than works within a named_bitfield type
+    """
+    nbf = mutable_named_bitfield('TestBitfield',
+                                 [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf(2, 5, 2)
+    test2 = nbf(0, 0, 0)
+    ok_(test1 > test2)

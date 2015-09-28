@@ -43,6 +43,24 @@ class BaseNamedBitfield(object):
             bitstring |= value
         return bitstring
 
+    @classmethod
+    def fromint(cls, num):
+        """Create a new named_bitfield from the given integer
+
+        :param num: The integer to build the instance from
+        :returns: New class instance
+
+        """
+        # We can't validate each individual field, but we can make sure the
+        # whole integer fits in the defined fields
+        total_bits = sum([f.width for f in cls._field_mapping.values()])
+        if bitwidth(num) > total_bits:
+            raise ValueError("{0} will not fit in a {1}".format(num,
+                                                                cls.__name__))
+        result = cls()
+        result._bitstring = num
+        return result
+
     def __int__(self):
         return self._bitstring
 

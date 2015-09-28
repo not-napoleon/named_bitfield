@@ -86,6 +86,24 @@ def test_init_too_big():
     nbf(1024, 1024, 1024)
 
 
+def test_from_int():
+    """Can create a named_bitfield from an integer
+    """
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
+    test1 = nbf.fromint(85)
+    test1.a = 1
+    test1.b = 5
+    test1.c = 1
+
+
+@raises(ValueError)
+def test_from_int_validation():
+    """Passing fromint a value with more bits than defined in the spec raises
+    """
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
+    nbf.fromint(1024)
+
+
 ####
 # Setter tests
 def test_set_attributes():

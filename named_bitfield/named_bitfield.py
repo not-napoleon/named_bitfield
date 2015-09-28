@@ -57,6 +57,13 @@ class BaseNamedBitfield(object):
     def __hex__(self):
         return hex(self._bitstring)
 
+    def __hash__(self):
+        # This means different named_bitfields that happen to have the same
+        # integer representation will hash to the same thing.  That matches the
+        # definition of equality used above, but might not be the most sensible
+        # thing to do.
+        return hash(int(self))
+
 
 def bitwidth(num):
     """Return the number of bits required to represent num
@@ -115,7 +122,10 @@ def named_bitfield(cname, fields, mutable=True):
             field_spec = self._field_mapping[fieldname]
             return (self._bitstring & field_spec.mask) >> field_spec.offset
 
-        return property(field_getter, field_setter)
+        if mutable:
+            return property(field_getter, field_setter)
+        else:
+            return property(field_getter)
 
     props = {fn: mk_property(fn) for fn, v in fields}
     props['_field_mapping'] = field_mapping

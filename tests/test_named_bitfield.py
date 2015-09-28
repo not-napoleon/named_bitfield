@@ -92,7 +92,8 @@ def test_init_too_big():
 def test_set_attributes():
     """Can set the attributes of a named_bitfield
     """
-    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=True)
     test1 = nbf()
     test1.a = 3
     test1.b = 7
@@ -105,7 +106,8 @@ def test_set_attributes():
 def test_invalid_types():
     """named_bitfield fields must be integer values
     """
-    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=True)
     test1 = nbf()
 
     def check_setter(obj, val):
@@ -120,7 +122,8 @@ def test_invalid_types():
 def test_overrun():
     """Overrunning a field doesn't corrupt the adjecent fields
     """
-    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)])
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=True)
     test1 = nbf()
     test1.a = 0
     test1.b = 7
@@ -136,6 +139,16 @@ def test_overrun():
     eq_(test1.a, 0)
     # b is in an undefined state, no sane test for its value
     eq_(test1.c, 0)
+
+
+@raises(AttributeError)
+def test_immutable_no_setter():
+    """Trying to use a field of an immutable bitfield as an lvalue raises
+    """
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=False)
+    test1 = nbf(3, 7, 1)
+    test1.a = 0
 
 
 @raises(ValueError)
@@ -230,3 +243,21 @@ def test_unhashable_mutables_2():
                          mutable=True)
     test1 = nbf(2, 5, 2)
     ok_(not isinstance(test1, collections.Hashable))
+
+
+def test_immutable_hashes_as_int():
+    """Hash of a mutable bitfield is the hash of the int
+    """
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=False)
+    test1 = nbf(2, 5, 2)
+    eq_(hash(test1), hash(int(test1)))
+
+
+def test_immutable_is_hashable():
+    """Immutable bitfields are instances of collections.Hashable
+    """
+    nbf = named_bitfield('TestBitfield', [('a', 2), ('b', 4), ('c', 2)],
+                         mutable=False)
+    test1 = nbf(2, 5, 2)
+    ok_(isinstance(test1, collections.Hashable))

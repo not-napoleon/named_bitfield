@@ -4,6 +4,7 @@ or longs (as appropriate) and with clean interfaces to the fields.
 """
 
 from collections import OrderedDict, namedtuple
+from keyword import iskeyword
 
 import six
 
@@ -136,6 +137,30 @@ def named_bitfield(cname, fields, mutable=False):
               parameters
 
     """
+    # This is the same set of field checks namedtuple uses.  See code at
+    # https://hg.python.org/cpython/file/2.7/Lib/collections.py#l334
+    # (Available under the PSF license)
+    for name in [cname] + [f[0] for f in fields]:
+        if type(name) != str:
+            raise TypeError('Type names and field names must be strings')
+        if not all(c.isalnum() or c == '_' for c in name):
+            raise ValueError('Type names and field names can only contain '
+                             'alphanumeric characters and underscores: %r'
+                             % name)
+        if iskeyword(name):
+            raise ValueError('Type names and field names cannot be a '
+                             'keyword: %r' % name)
+        if name[0].isdigit():
+            raise ValueError('Type names and field names cannot start with '
+                             'a number: %r' % name)
+    seen = set()
+    for name in [f[0] for f in fields]:
+        if name.startswith('_'):
+            raise ValueError('Field names cannot start with an underscore: '
+                             '%r' % name)
+        if name in seen:
+            raise ValueError('Encountered duplicate field name: %r' % name)
+        seen.add(name)
 
     FieldSpec = namedtuple('FieldSpec', "offset mask width")
     field_mapping = OrderedDict()
